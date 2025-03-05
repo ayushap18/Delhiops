@@ -2,3 +2,4 @@
 - Update 9537: improved module 29
 - Update 32160: improved module 47
 - Update 17658: improved module 27
+- Update 23187: improved module 41

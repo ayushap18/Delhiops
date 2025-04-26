@@ -7,3 +7,4 @@
 - Update 8429: improved module 14
 - Update 10899: improved module 3
 - Update 15365: improved module 16
+- Update 1705: improved module 2

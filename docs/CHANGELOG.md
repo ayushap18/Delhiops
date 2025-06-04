@@ -12,3 +12,4 @@
 - Update 14466: improved module 19
 - Update 4655: improved module 42
 - Update 20802: improved module 46
+- Update 30936: improved module 42

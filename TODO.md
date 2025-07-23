@@ -7,3 +7,4 @@
 - [ ] Task 890: optimize function 33
 - [ ] Task 414: optimize function 45
 - [ ] Task 665: optimize function 28
+- [ ] Task 408: optimize function 18

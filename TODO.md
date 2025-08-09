@@ -11,3 +11,4 @@
 - [ ] Task 482: optimize function 49
 - [ ] Task 655: optimize function 23
 - [ ] Task 43: optimize function 27
+- [ ] Task 497: optimize function 41

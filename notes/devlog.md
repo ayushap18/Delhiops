@@ -6,3 +6,4 @@ Session 79: tested feature 14, result OK
 Session 901: tested feature 1, result OK
 Session 554: tested feature 13, result OK
 Session 690: tested feature 22, result OK
+Session 420: tested feature 17, result OK

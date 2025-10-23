@@ -20,3 +20,4 @@
 - Update 20786: improved module 41
 - Update 10826: improved module 0
 - Update 18847: improved module 43
+- Update 7576: improved module 21

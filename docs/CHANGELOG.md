@@ -23,3 +23,4 @@
 - Update 7576: improved module 21
 - Update 19608: improved module 20
 - Update 3367: improved module 30
+- Update 17629: improved module 36

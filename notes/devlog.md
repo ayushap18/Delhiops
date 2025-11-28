@@ -10,3 +10,4 @@ Session 420: tested feature 17, result OK
 Session 972: tested feature 22, result OK
 Session 484: tested feature 26, result OK
 Session 670: tested feature 13, result OK
+Session 977: tested feature 2, result OK

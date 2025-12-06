@@ -12,3 +12,4 @@ Session 484: tested feature 26, result OK
 Session 670: tested feature 13, result OK
 Session 977: tested feature 2, result OK
 Session 795: tested feature 3, result OK
+Session 488: tested feature 16, result OK

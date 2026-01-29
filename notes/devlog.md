@@ -20,3 +20,4 @@ Session 383: tested feature 10, result OK
 Session 492: tested feature 9, result OK
 Session 495: tested feature 11, result OK
 Session 207: tested feature 14, result OK
+Session 187: tested feature 25, result OK

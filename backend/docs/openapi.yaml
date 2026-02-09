@@ -1,0 +1,1256 @@
+openapi: 3.0.3
+info:
+  title: Delhi Ops Dashboard API
+  version: 1.0.0
+  description: Real-time urban monitoring dashboard for Delhi - Air Quality, Crime, Traffic, Cameras, and Incidents.
+
+servers:
+  - url: /api/v1
+    description: API v1
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    idParam:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+    pageParam:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    limitParam:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 500
+        default: 50
+    sortByParam:
+      name: sort_by
+      in: query
+      schema:
+        type: string
+    sortOrderParam:
+      name: sort_order
+      in: query
+      schema:
+        type: string
+        enum: [asc, desc]
+        default: desc
+    fromDateParam:
+      name: from_date
+      in: query
+      schema:
+        type: string
+        format: date-time
+    toDateParam:
+      name: to_date
+      in: query
+      schema:
+        type: string
+        format: date-time
+
+  schemas:
+    Location:
+      type: object
+      required: [lat, lng]
+      properties:
+        lat:
+          type: number
+          minimum: -90
+          maximum: 90
+        lng:
+          type: number
+          minimum: -180
+          maximum: 180
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        totalPages:
+          type: integer
+        hasNext:
+          type: boolean
+        hasPrev:
+          type: boolean
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data: {}
+
+    PaginatedResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data: {}
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details: {}
+            requestId:
+              type: string
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+
+    AqiReading:
+      type: object
+      properties:
+        id:
+          type: integer
+        timestamp:
+          type: string
+          format: date-time
+        location:
+          $ref: '#/components/schemas/Location'
+        aqi:
+          type: integer
+          minimum: 0
+          maximum: 999
+        pm2_5:
+          type: number
+          nullable: true
+        pm10:
+          type: number
+          nullable: true
+        o3:
+          type: number
+          nullable: true
+        no2:
+          type: number
+          nullable: true
+        so2:
+          type: number
+          nullable: true
+        co:
+          type: number
+          nullable: true
+
+    CreateAqiRequest:
+      type: object
+      required: [location, aqi]
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        location:
+          $ref: '#/components/schemas/Location'
+        aqi:
+          type: integer
+          minimum: 0
+          maximum: 999
+        pm2_5:
+          type: number
+          nullable: true
+        pm10:
+          type: number
+          nullable: true
+        o3:
+          type: number
+          nullable: true
+        no2:
+          type: number
+          nullable: true
+        so2:
+          type: number
+          nullable: true
+        co:
+          type: number
+          nullable: true
+
+    CrimeReport:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+        severity:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [reported, investigating, resolved, closed]
+        location:
+          $ref: '#/components/schemas/Location'
+
+    CreateCrimeRequest:
+      type: object
+      required: [type, location]
+      properties:
+        type:
+          type: string
+          maxLength: 100
+        location:
+          $ref: '#/components/schemas/Location'
+        severity:
+          type: string
+          maxLength: 50
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [reported, investigating, resolved, closed]
+
+    TrafficData:
+      type: object
+      properties:
+        id:
+          type: integer
+        congestion_level:
+          type: number
+          minimum: 0
+          maximum: 100
+        speed:
+          type: number
+          minimum: 0
+        timestamp:
+          type: string
+          format: date-time
+
+    CreateTrafficRequest:
+      type: object
+      required: [congestion_level, speed]
+      properties:
+        congestion_level:
+          type: number
+          minimum: 0
+          maximum: 100
+        speed:
+          type: number
+          minimum: 0
+        timestamp:
+          type: string
+          format: date-time
+
+    Camera:
+      type: object
+      properties:
+        id:
+          type: integer
+        status:
+          type: string
+          enum: [online, offline, maintenance]
+        coordinates:
+          type: string
+        feed_url:
+          type: string
+          format: uri
+        location:
+          $ref: '#/components/schemas/Location'
+
+    CreateCameraRequest:
+      type: object
+      required: [location, feed_url]
+      properties:
+        location:
+          $ref: '#/components/schemas/Location'
+        status:
+          type: string
+          enum: [online, offline, maintenance]
+        feed_url:
+          type: string
+          format: uri
+
+    Incident:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+        severity:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        description:
+          type: string
+        status:
+          type: string
+          enum: [open, in_progress, resolved, closed]
+        location:
+          $ref: '#/components/schemas/Location'
+
+    CreateIncidentRequest:
+      type: object
+      required: [type, location]
+      properties:
+        type:
+          type: string
+          maxLength: 100
+        severity:
+          type: string
+          maxLength: 50
+        location:
+          $ref: '#/components/schemas/Location'
+        timestamp:
+          type: string
+          format: date-time
+        description:
+          type: string
+          maxLength: 5000
+        status:
+          type: string
+          enum: [open, in_progress, resolved, closed]
+
+  responses:
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Forbidden:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+security:
+  - bearerAuth: []
+
+paths:
+  # --- Auth ---
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Authenticate user
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/LoginResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Revoke current token
+      responses:
+        '200':
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Refresh JWT token
+      responses:
+        '200':
+          description: New token issued
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/LoginResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Get current user profile
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # --- AQI ---
+  /aqi:
+    get:
+      tags: [Air Quality]
+      summary: List AQI readings
+      parameters:
+        - $ref: '#/components/parameters/pageParam'
+        - $ref: '#/components/parameters/limitParam'
+        - $ref: '#/components/parameters/sortByParam'
+        - $ref: '#/components/parameters/sortOrderParam'
+        - $ref: '#/components/parameters/fromDateParam'
+        - $ref: '#/components/parameters/toDateParam'
+        - name: aqi_min
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+        - name: aqi_max
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+      responses:
+        '200':
+          description: Paginated AQI readings
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/AqiReading'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags: [Air Quality]
+      summary: Create AQI reading
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAqiRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/AqiReading'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /aqi/{id}:
+    get:
+      tags: [Air Quality]
+      summary: Get AQI reading by ID
+      parameters:
+        - $ref: '#/components/parameters/idParam'
+      responses:
+        '200':
+          description: AQI reading
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/AqiReading'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [Air Quality]
+      summary: Update AQI reading
+      parameters:
+        - $ref: '#/components/parameters/idParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAqiRequest'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/AqiReading'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Air Quality]
+      summary: Delete AQI reading
+      parameters:
+        - $ref: '#/components/parameters/idParam'
+      responses:
+        '200':
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # --- Crime ---
+  /crime:
+    get:
+      tags: [Crime]
+      summary: List crime reports
+      parameters:
+        - $ref: '#/components/parameters/pageParam'
+        - $ref: '#/components/parameters/limitParam'
+        - $ref: '#/components/parameters/sortByParam'
+        - $ref: '#/components/parameters/sortOrderParam'
+        - $ref: '#/components/parameters/fromDateParam'
+        - $ref: '#/components/parameters/toDateParam'
+        - name: type
+          in: query
+          schema:
+            type: string
+            maxLength: 100
+        - name: severity
+          in: query
+          schema:
+            type: string
+            maxLength: 50
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [reported, investigating, resolved, closed]
+      responses:
+        '200':
+          description: Paginated crime reports
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/CrimeReport'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags: [Crime]
+      summary: Create crime report
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCrimeRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/CrimeReport'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /crime/{id}:
+    get:
+      tags: [Crime]
+      summary: Get crime report by ID
+      parameters:
+        - $ref: '#/components/parameters/idParam'
+      responses:
+        '200':
+          description: Crime report
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/CrimeReport'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [Crime]
+      summary: Update crime report
+      parameters:
+        - $ref: '#/components/parameters/idParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCrimeRequest'
+      responses:
+        '200':
+          description: Updated
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Crime]
+      summary: Delete crime report
+      parameters:
+        - $ref: '#/components/parameters/idParam'
+      responses:
+        '200':
+          description: Deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # --- Traffic ---
+  /traffic:
+    get:
+      tags: [Traffic]
+      summary: List traffic data
+      parameters:
+        - $ref: '#/components/parameters/pageParam'
+        - $ref: '#/components/parameters/limitParam'
+        - $ref: '#/components/parameters/sortByParam'
+        - $ref: '#/components/parameters/sortOrderParam'
+        - $ref: '#/components/parameters/fromDateParam'
+        - $ref: '#/components/parameters/toDateParam'
+        - name: congestion_min
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 100
+        - name: congestion_max
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 100
+      responses:
+        '200':
+          description: Paginated traffic data
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/TrafficData'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags: [Traffic]
+      summary: Create traffic data record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTrafficRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/TrafficData'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /traffic/{id}:
+    get:
+      tags: [Traffic]
+      summary: Get traffic data by ID
+      parameters:
+        - $ref: '#/components/parameters/idParam'
+      responses:
+        '200':
+          description: Traffic data record
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/TrafficData'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [Traffic]
+      summary: Update traffic data
+      parameters:
+        - $ref: '#/components/parameters/idParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTrafficRequest'
+      responses:
+        '200':
+          description: Updated
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Traffic]
+      summary: Delete traffic data
+      parameters:
+        - $ref: '#/components/parameters/idParam'
+      responses:
+        '200':
+          description: Deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # --- Cameras ---
+  /cameras:
+    get:
+      tags: [Cameras]
+      summary: List cameras
+      parameters:
+        - $ref: '#/components/parameters/pageParam'
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 500
+            default: 200
+        - $ref: '#/components/parameters/sortByParam'
+        - $ref: '#/components/parameters/sortOrderParam'
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [online, offline, maintenance]
+      responses:
+        '200':
+          description: Paginated cameras
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Camera'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags: [Cameras]
+      summary: Create camera
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCameraRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/Camera'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /cameras/{id}:
+    get:
+      tags: [Cameras]
+      summary: Get camera by ID
+      parameters:
+        - $ref: '#/components/parameters/idParam'
+      responses:
+        '200':
+          description: Camera details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/Camera'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [Cameras]
+      summary: Update camera
+      parameters:
+        - $ref: '#/components/parameters/idParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCameraRequest'
+      responses:
+        '200':
+          description: Updated
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Cameras]
+      summary: Delete camera
+      parameters:
+        - $ref: '#/components/parameters/idParam'
+      responses:
+        '200':
+          description: Deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # --- Incidents ---
+  /incidents:
+    get:
+      tags: [Incidents]
+      summary: List incidents
+      parameters:
+        - $ref: '#/components/parameters/pageParam'
+        - $ref: '#/components/parameters/limitParam'
+        - $ref: '#/components/parameters/sortByParam'
+        - $ref: '#/components/parameters/sortOrderParam'
+        - $ref: '#/components/parameters/fromDateParam'
+        - $ref: '#/components/parameters/toDateParam'
+        - name: type
+          in: query
+          schema:
+            type: string
+            maxLength: 100
+        - name: severity
+          in: query
+          schema:
+            type: string
+            maxLength: 50
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [open, in_progress, resolved, closed]
+      responses:
+        '200':
+          description: Paginated incidents
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Incident'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags: [Incidents]
+      summary: Create incident
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateIncidentRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/Incident'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /incidents/{id}:
+    get:
+      tags: [Incidents]
+      summary: Get incident by ID
+      parameters:
+        - $ref: '#/components/parameters/idParam'
+      responses:
+        '200':
+          description: Incident details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/Incident'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [Incidents]
+      summary: Update incident
+      parameters:
+        - $ref: '#/components/parameters/idParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateIncidentRequest'
+      responses:
+        '200':
+          description: Updated
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Incidents]
+      summary: Delete incident
+      parameters:
+        - $ref: '#/components/parameters/idParam'
+      responses:
+        '200':
+          description: Deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # --- System ---
+  /system/metrics:
+    get:
+      tags: [System]
+      summary: Get system metrics (socket, cache, circuit breakers)
+      responses:
+        '200':
+          description: System metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /system/cache/metrics:
+    get:
+      tags: [System]
+      summary: Get cache analytics
+      responses:
+        '200':
+          description: Cache metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /system/cache/keys:
+    get:
+      tags: [System]
+      summary: List cache keys
+      parameters:
+        - name: prefix
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 100
+      responses:
+        '200':
+          description: Cache keys
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /system/cache/bust:
+    post:
+      tags: [System]
+      summary: Bust cache by key or prefix
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                key:
+                  type: string
+                prefix:
+                  type: string
+      responses:
+        '200':
+          description: Cache busted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /system/cache/patch:
+    post:
+      tags: [System]
+      summary: Patch a cached JSON value
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [key, patch]
+              properties:
+                key:
+                  type: string
+                patch:
+                  type: object
+                ttlSeconds:
+                  type: integer
+                staleTtlSeconds:
+                  type: integer
+                strategy:
+                  type: string
+      responses:
+        '200':
+          description: Cache patched
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /system/cache/warm:
+    post:
+      tags: [System]
+      summary: Trigger cache warming
+      responses:
+        '200':
+          description: Cache warmed
+
+  /system/cache/preload:
+    post:
+      tags: [System]
+      summary: Trigger predictive cache preload
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [key]
+              properties:
+                key:
+                  type: string
+      responses:
+        '200':
+          description: Preload triggered
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /system/config:
+    get:
+      tags: [System]
+      summary: Get static application config
+      responses:
+        '200':
+          description: Static config
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /system/preferences:
+    get:
+      tags: [System]
+      summary: Get user preferences
+      parameters:
+        - name: version
+          in: query
+          schema:
+            type: string
+            default: '1'
+      responses:
+        '200':
+          description: User preferences
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+    put:
+      tags: [System]
+      summary: Upsert user preferences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [preferences]
+              properties:
+                preferences:
+                  type: object
+                version:
+                  type: string
+      responses:
+        '200':
+          description: Preferences saved
+
+  /system/db/slow-queries:
+    get:
+      tags: [System - DB Admin]
+      summary: Get slow query report
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Slow queries
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /system/db/locks:
+    get:
+      tags: [System - DB Admin]
+      summary: Get database lock status
+      responses:
+        '200':
+          description: Lock status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /system/db/bloat:
+    get:
+      tags: [System - DB Admin]
+      summary: Get table bloat estimates
+      responses:
+        '200':
+          description: Bloat estimates
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /system/db/views/refresh:
+    post:
+      tags: [System - DB Admin]
+      summary: Refresh materialized views
+      responses:
+        '200':
+          description: Views refreshed
+
+  /system/db/retention/run:
+    post:
+      tags: [System - DB Admin]
+      summary: Run data retention cleanup
+      responses:
+        '200':
+          description: Retention executed
+
+  /system/db/partitions/archive:
+    post:
+      tags: [System - DB Admin]
+      summary: Archive old partitions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                retentionMonths:
+                  type: integer
+                  default: 12
+      responses:
+        '200':
+          description: Partitions archived

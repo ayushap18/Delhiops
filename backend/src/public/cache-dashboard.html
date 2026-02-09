@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Delhi Ops Cache Dashboard</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --panel: #111827;
+            --text: #e5e7eb;
+            --muted: #9ca3af;
+            --accent: #22c55e;
+            --warn: #f59e0b;
+        }
+        body {
+            margin: 0;
+            font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+            background: radial-gradient(circle at top, #1f2937 0%, var(--bg) 60%);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .wrap {
+            max-width: 960px;
+            margin: 0 auto;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .panel {
+            background: linear-gradient(160deg, rgba(17, 24, 39, 0.95), rgba(17, 24, 39, 0.7));
+            border: 1px solid rgba(156, 163, 175, 0.2);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            backdrop-filter: blur(3px);
+        }
+        pre {
+            white-space: pre-wrap;
+            word-break: break-word;
+            color: #d1d5db;
+            margin: 0;
+        }
+        button {
+            background: var(--accent);
+            border: none;
+            color: #052e16;
+            font-weight: 600;
+            border-radius: 8px;
+            padding: 0.6rem 1rem;
+            cursor: pointer;
+        }
+        .hint {
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+        .badge {
+            color: var(--warn);
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <main class="wrap">
+        <section class="header">
+            <h1>Cache Monitoring</h1>
+            <button id="refreshBtn" type="button">Refresh</button>
+        </section>
+        <section class="panel">
+            <p class="hint">Use an Admin JWT token in the field below.</p>
+            <input id="tokenInput" type="password" style="width:100%;padding:0.6rem;border-radius:8px;border:1px solid #374151;background:#0b1220;color:#e5e7eb;" placeholder="Bearer token" />
+            <p class="badge">Endpoint: /api/v1/system/cache/metrics</p>
+        </section>
+        <section class="panel">
+            <h2>Snapshot</h2>
+            <pre id="output">No data loaded</pre>
+        </section>
+    </main>
+    <script>
+        const output = document.getElementById('output');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const tokenInput = document.getElementById('tokenInput');
+
+        async function loadMetrics() {
+            const token = tokenInput.value.trim();
+            if (!token) {
+                output.textContent = 'Provide an Admin JWT token to fetch metrics.';
+                return;
+            }
+            try {
+                const res = await fetch('/api/v1/system/cache/metrics', {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                const data = await res.json();
+                output.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                output.textContent = `Failed to load metrics: ${error.message}`;
+            }
+        }
+
+        refreshBtn.addEventListener('click', loadMetrics);
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/service-worker.js').catch(() => {});
+        }
+    </script>
+</body>
+</html>

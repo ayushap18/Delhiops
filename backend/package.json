@@ -1,0 +1,46 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "test": "node --test",
+    "db:migrate:opt": "psql \"$DATABASE_URL\" -f database/migrations/001_db_optimization.sql",
+    "db:retention:run": "psql \"$DATABASE_URL\" -f scripts/db/run-retention.sql",
+    "db:mv:refresh": "psql \"$DATABASE_URL\" -f scripts/db/refresh-materialized-views.sql",
+    "db:monitor:slow": "psql \"$DATABASE_URL\" -f scripts/db/slow-queries.sql",
+    "db:monitor:locks": "psql \"$DATABASE_URL\" -f scripts/db/lock-monitor.sql",
+    "db:monitor:bloat": "psql \"$DATABASE_URL\" -f scripts/db/bloat-estimate.sql",
+    "db:maint:vacuum": "psql \"$DATABASE_URL\" -f scripts/db/vacuum-analyze.sql",
+    "db:explain": "psql \"$DATABASE_URL\" -f scripts/db/explain-dashboard.sql",
+    "db:benchmark": "node scripts/benchmarks/db-benchmark.js",
+    "db:seed": "node scripts/seed-data.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@socket.io/redis-adapter": "^8.2.1",
+    "bcrypt": "^6.0.0",
+    "compression": "^1.8.1",
+    "cors": "^2.8.6",
+    "dotenv": "^17.2.4",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.2.1",
+    "express-slow-down": "^2.1.0",
+    "helmet": "^8.1.0",
+    "joi": "^17.13.3",
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.18.0",
+    "redis": "^5.10.0",
+    "socket.io": "^4.8.3",
+    "swagger-ui-express": "^5.0.1",
+    "winston": "^3.19.0",
+    "yamljs": "^0.3.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
+  }
+}

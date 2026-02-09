@@ -126,11 +126,14 @@ export function AqiRadarChart({ data }: AqiRadarChartProps) {
 
           <Tooltip
             content={<ChartTooltip />}
-            formatter={(value: number, _name: string, props: { payload: { pollutant: string; raw: number } }) => {
-              const pollutant = props.payload.pollutant;
+            formatter={(value: number | undefined, _name: string | undefined, props) => {
+              if (value === undefined) return [String(value), _name];
+              const p = props.payload as { pollutant: string; raw: number } | undefined;
+              if (!p) return [String(value), _name];
+              const pollutant = p.pollutant;
               const threshold = THRESHOLDS[pollutant];
               return [
-                `${props.payload.raw} ${threshold.unit} (${value}% of limit)`,
+                `${p.raw} ${threshold.unit} (${value}% of limit)`,
                 pollutant,
               ];
             }}

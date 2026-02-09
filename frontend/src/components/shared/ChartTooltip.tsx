@@ -1,10 +1,6 @@
-import type { TooltipProps } from "recharts";
+import type { TooltipContentProps } from "recharts";
 
-interface ChartTooltipProps extends TooltipProps<number, string> {
-  // inherits active, payload, label from Recharts
-}
-
-export function ChartTooltip({ active, payload, label }: ChartTooltipProps) {
+export function ChartTooltip({ active, payload, label }: Partial<TooltipContentProps<number, string>>) {
   if (!active || !payload?.length) return null;
 
   return (
@@ -20,7 +16,7 @@ export function ChartTooltip({ active, payload, label }: ChartTooltipProps) {
         {label}
       </p>
       <div className="space-y-1">
-        {payload.map((entry, i) => (
+        {payload.map((entry, i: number) => (
           <div key={i} className="flex items-center justify-between gap-4 text-[10px] font-mono">
             <div className="flex items-center gap-1.5">
               <span
